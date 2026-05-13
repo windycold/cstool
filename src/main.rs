@@ -2,6 +2,7 @@ mod cli;
 mod core;
 mod recipes;
 
+use crate::core::MirrorError;
 use clap::Parser;
 use cli::{Cli, Command};
 
@@ -35,5 +36,22 @@ fn reset(target: &str, scope: Option<cli::ScopeArg>) -> Result<(), crate::core::
     todo!()
 }
 fn list(target: Option<String>) -> Result<(), crate::core::MirrorError> {
-    todo!()
+    match target {
+        Some(t) => match recipes::get_manger(&t) {
+            Some(manger) => {
+                for i in manger.available_mirrors() {
+                    print!("{}", i.name)
+                }
+                Ok(())
+            }
+            None => Err(MirrorError::MirrorNotFound(t)),
+        },
+        None => {
+            println!("支持的目标有：");
+            for manger in recipes::MANGER_REGISTRY {
+                print!("{} ",manger.name());
+            }
+            Ok(())
+        }
+    }
 }
