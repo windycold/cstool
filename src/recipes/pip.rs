@@ -1,5 +1,4 @@
-use crate::cli::ScopeArg;
-use crate::core::{MirrorError, MirrorManger, MirrorSite};
+use crate::core::{MirrorError, MirrorManger, MirrorSite, Scope};
 
 pub struct PipManager {
     name: &'static str,
@@ -9,20 +8,17 @@ pub struct PipManager {
     mirrors: &'static [MirrorSite],
 }
 
-impl PipManager{
-
-    pub const DATA:Self = Self{
+impl PipManager {
+    pub const DATA: Self = Self {
         name: "pip",
         version: "latest",
         author: "Python Software Foundation",
         description: "Pip is a package manager for Python",
-        mirrors: &[
-            MirrorSite{
-                name:"tnua",
-                description:"",
-                url:"",
-            }
-        ],
+        mirrors: &[MirrorSite {
+            name: "tuna",
+            description: "",
+            url: "",
+        }],
     };
 }
 
@@ -39,12 +35,12 @@ impl MirrorManger for PipManager {
         self.mirrors
     }
 
-    fn set(&self, name: &str, scope: Option<ScopeArg>) -> Result<(), MirrorError> {
+    fn set(&self, name: &str, scope: Option<Scope>) -> Result<(), MirrorError> {
         todo!();
         Ok(())
     }
 
-    fn reset(&self, scope: Option<ScopeArg>) -> Result<(), MirrorError> {
+    fn reset(&self, scope: Option<Scope>) -> Result<(), MirrorError> {
         todo!()
     }
 }
