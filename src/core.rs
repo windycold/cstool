@@ -8,7 +8,7 @@ pub struct MirrorSite {
     pub url: &'static str,
 }
 
-pub trait MirrorManger: Sync {
+pub trait MirrorManger: Sync + 'static {
     fn name(&self) -> &'static str;
     fn author(&self) -> &'static str;
     fn available_mirrors(&self) -> &'static [MirrorSite];
@@ -37,6 +37,7 @@ pub enum MirrorError {
     SpeedTestFailed(String),
 }
 
+#[derive(Copy, Clone)]
 pub enum Scope {
     Global,
     User,

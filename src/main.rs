@@ -2,7 +2,6 @@ mod cli;
 mod core;
 mod recipes;
 
-use crate::cli::ScopeArg;
 use crate::core::{MirrorError, Scope};
 use clap::Parser;
 use cli::{Cli, Command};
@@ -27,17 +26,16 @@ fn main() {
     }
 }
 
-fn set(
-    target: &str,
-    mirror: Option<String>,
-    scope: Option<Scope>,
-) -> Result<(), crate::core::MirrorError> {
+fn set(target: &str, mirror: Option<String>, scope: Option<Scope>) -> Result<(), MirrorError> {
     todo!()
 }
-fn reset(target: &str, scope: Option<Scope>) -> Result<(), crate::core::MirrorError> {
-    todo!()
+fn reset(target: &str, scope: Option<Scope>) -> Result<(), MirrorError> {
+    match recipes::get_manger(target) {
+        Some(t) => t.reset(scope),
+        None => Err(MirrorError::MangerNotFound(target.to_string())),
+    }
 }
-fn list(target: Option<String>) -> Result<(), crate::core::MirrorError> {
+fn list(target: Option<String>) -> Result<(), MirrorError> {
     match target {
         Some(t) => match recipes::get_manger(&t) {
             Some(manger) => {
@@ -46,18 +44,20 @@ fn list(target: Option<String>) -> Result<(), crate::core::MirrorError> {
                     manger.name(),
                     manger.author()
                 );
-                for i in manger.available_mirrors() {
-                    print!("{}", i.name)
-                }
+                let _ = manger
+                    .available_mirrors()
+                    .iter()
+                    .map(|x| print!("{} ", x.name));
+
                 Ok(())
             }
             None => Err(MirrorError::MangerNotFound(t)),
         },
         None => {
             println!("支持的目标有：");
-            for manger in recipes::MANGER_REGISTRY {
-                print!("{} ", manger.name());
-            }
+            let _ = recipes::MANGER_REGISTRY
+                .iter()
+                .map(|x| print!("{} ", x.name()));
             Ok(())
         }
     }
