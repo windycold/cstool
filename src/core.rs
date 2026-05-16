@@ -1,4 +1,3 @@
-use crate::cli;
 use crate::cli::ScopeArg;
 use thiserror::Error;
 
@@ -10,9 +9,13 @@ pub struct MirrorSite {
 
 pub trait MirrorManger: Sync + 'static {
     fn name(&self) -> &'static str;
-    fn author(&self) -> &'static str;
+    fn description(&self) -> String;
     fn available_mirrors(&self) -> &'static [MirrorSite];
-    fn set(&self, name: &str, scope: Option<Scope>) -> Result<(), MirrorError>;
+    fn set(
+        &self,
+        mirror: Option<String>,
+        scope: Option<Scope>,
+    ) -> Result<(), MirrorError>;
     fn reset(&self, scope: Option<Scope>) -> Result<(), MirrorError>;
 }
 
@@ -39,15 +42,15 @@ pub enum MirrorError {
 
 #[derive(Copy, Clone)]
 pub enum Scope {
-    Global,
+    System,
     User,
     Project,
 }
 
-impl From<cli::ScopeArg> for Scope {
+impl From<ScopeArg> for Scope {
     fn from(value: ScopeArg) -> Self {
         match value {
-            ScopeArg::Global => Scope::Global,
+            ScopeArg::System => Scope::System,
             ScopeArg::Project => Scope::Project,
             ScopeArg::User => Scope::User,
         }

@@ -7,13 +7,12 @@ pub struct Cli {
     pub command: Command,
     #[arg(long = "scope")]
     pub scope: Option<ScopeArg>,
-
     #[arg(long = "ipv6")]
     pub ipv6: bool,
 }
 
 #[derive(Subcommand)]
-pub(crate) enum Command {
+pub enum Command {
     Set {
         target: String,
         mirror: Option<String>,
@@ -28,7 +27,7 @@ pub(crate) enum Command {
 
 #[derive(Clone, ValueEnum)]
 pub enum ScopeArg {
-    Global,
+    System,
     User,
     Project,
 }

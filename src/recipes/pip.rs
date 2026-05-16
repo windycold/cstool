@@ -27,20 +27,22 @@ impl MirrorManger for PipManager {
         self.name
     }
 
-    fn author(&self) -> &'static str {
-        self.author
+    fn description(&self) -> String {
+        format!(
+            "名称：{}\n版本：{}\n作者：{}\n介绍：{}",
+            self.name, self.version, self.author, self.description,
+        )
     }
 
     fn available_mirrors(&self) -> &'static [MirrorSite] {
         self.mirrors
     }
 
-    fn set(&self, name: &str, scope: Option<Scope>) -> Result<(), MirrorError> {
+    fn set(&self, mirror: Option<String>, scope: Option<Scope>) -> Result<(), MirrorError> {
         todo!();
-        Ok(())
     }
 
     fn reset(&self, scope: Option<Scope>) -> Result<(), MirrorError> {
-        todo!()
+        Self::DATA.set(Some("official".to_string()), scope)
     }
 }
