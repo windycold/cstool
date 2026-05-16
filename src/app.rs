@@ -10,25 +10,23 @@ impl App {
     }
 
     pub fn run(&self, cli: Cli) {
-        let scope: Option<crate::core::Scope> = cli.scope.map(Into::into);
-        match cli.command {
-            Command::Set { target, mirror } => match Self::set(&target, mirror, scope) {
-                Ok(_) => (),
-                Err(e) => eprintln!("{}", e),
-            },
-            Command::Reset { target } => match Self::reset(&target, scope) {
-                Ok(_) => (),
-                Err(e) => eprintln!("{}", e),
-            },
-            Command::List { target } => match Self::list(target) {
-                Ok(_) => (),
-                Err(e) => eprintln!("{}", e),
-            },
-        }
+        let scope: Option<Scope> = cli.scope.map(Into::into);
+        let result = match cli.command {
+            Command::Set { target, mirror } => Self::set(&target, mirror, scope),
+            Command::Reset { target } => Self::reset(&target, scope),
+            Command::List { target } => Self::list(target),
+        };
+
+        if let Err(e) = result {
+            eprintln!("{}", e)
+        };
     }
 
     fn set(target: &str, mirror: Option<String>, scope: Option<Scope>) -> Result<(), MirrorError> {
-        todo!()
+        match recipes::get_manger(target) {
+            Some(t) => t.set(mirror, scope),
+            None => Err(MirrorError::MangerNotFound(target.to_string())),
+        }
     }
     fn reset(target: &str, scope: Option<Scope>) -> Result<(), MirrorError> {
         match recipes::get_manger(target) {
@@ -40,15 +38,11 @@ impl App {
         match target {
             Some(t) => match recipes::get_manger(&t) {
                 Some(manger) => {
-                    print!(
-                        "名称：{}\n维护者：{}\n可用的源：",
-                        manger.name(),
-                        manger.author()
-                    );
-                    let _ = manger
+                    print!("{}\n可用的源：", manger.description());
+                    manger
                         .available_mirrors()
                         .iter()
-                        .map(|x| print!("{} ", x.name));
+                        .for_each(|x| print!("{} ", x.name));
 
                     Ok(())
                 }
@@ -56,9 +50,9 @@ impl App {
             },
             None => {
                 println!("支持的目标有：");
-                let _ = recipes::MANGER_REGISTRY
+                recipes::MANGER_REGISTRY
                     .iter()
-                    .map(|x| print!("{} ", x.name()));
+                    .for_each(|x| print!("{} ", x.name));
                 Ok(())
             }
         }
