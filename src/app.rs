@@ -52,7 +52,7 @@ impl App {
                 println!("支持的目标有：");
                 recipes::MANGER_REGISTRY
                     .iter()
-                    .for_each(|x| print!("{} ", x.name()));
+                    .for_each(|x| print!("{} ", x.name));
                 Ok(())
             }
         }
