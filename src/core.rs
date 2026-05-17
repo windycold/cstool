@@ -43,7 +43,7 @@ pub struct MirrorSite {
 ///     mirrors: &[/* Array of MirrorSite instances */],
 ///     set_fun: MyProjectSet,
 /// };
-/// 
+///
 /// fn MyProjectSet(mirror: &MirrorSite, scope: Option<Scope>) -> Result<(), MirrorError> { todo! };
 /// ```
 ///
@@ -52,15 +52,35 @@ pub struct MirrorSite {
 /// - Ensure that the `set_fun` is properly defined and safe to use, as it directly manipulates the state of `MirrorSite` instances.
 /// - The `MirrorSite` and `Scope` types, along with `MirrorError`, should be defined elsewhere in your codebase to fully utilize this `MirrorManager` struct.
 pub struct MirrorManager {
-    pub name: &'static str,
-    pub version: &'static str,
-    pub author: &'static str,
-    pub description: &'static str,
-    pub mirrors: &'static [MirrorSite],
-    pub set_fun: fn(mirror: &MirrorSite, scope: Option<Scope>) -> Result<(), MirrorError>,
+    name: &'static str,
+    version: &'static str,
+    author: &'static str,
+    description: &'static str,
+    mirrors: &'static [MirrorSite],
+    set_fun: fn(mirror: &MirrorSite, scope: Option<Scope>) -> Result<(), MirrorError>,
 }
 
 impl MirrorManager {
+    pub const fn new(
+        name: &'static str,
+        version: &'static str,
+        author: &'static str,
+        description: &'static str,
+        mirrors: &'static [MirrorSite],
+        set_fun: fn(mirror: &MirrorSite, scope: Option<Scope>) -> Result<(), MirrorError>,
+    ) -> Self {
+        Self {
+            name,
+            version,
+            author,
+            description,
+            mirrors,
+            set_fun,
+        }
+    }
+    pub fn name(&self) -> &'static str {
+        self.name
+    }
     pub fn description(&self) -> String {
         format!(
             "名称：{}\n版本：{}\n作者：{}\n介绍：{}",
@@ -92,8 +112,6 @@ impl MirrorManager {
         todo!()
     }
 }
-
-
 
 #[derive(Error, Debug)]
 pub enum MirrorError {
