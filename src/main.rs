@@ -8,5 +8,5 @@ use cli::Cli;
 
 fn main() {
     let cli = Cli::parse();
-    app::App::new().run(cli);
+    app::App::new().run(cli);    //run the App
 }
