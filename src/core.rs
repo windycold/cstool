@@ -1,4 +1,6 @@
 use crate::cli::ScopeArg;
+use std::io::Read;
+use std::time::Instant;
 use thiserror::Error;
 
 /// Represents a mirror site with its associated details.
@@ -109,7 +111,51 @@ impl MirrorManager {
     }
 
     fn speedtest(&self) -> Result<&MirrorSite, MirrorError> {
-        todo!()
+        struct TestResult {
+            mirror: &'static MirrorSite,
+            test: f64,
+        }
+        let mut test_results: Vec<TestResult> = vec![];
+        println!("正在测速：");
+        for mirror in self.mirrors {
+            print!("源：{} ... ", mirror.name);
+            let response = match ureq::get(mirror.test_url).call() {
+                Ok(o) => o,
+                Err(e) => {
+                    print!("测速失败{}", e);
+                    continue;
+                }
+            };
+            let start = Instant::now();
+            let mut reader = response.into_body().into_reader();
+            let mut buffer = [0u8; 64 * 1024];
+            let mut total_bytes = 0;
+            loop {
+                let n = reader.read(&mut buffer)?;
+                if n == 0 {
+                    break;
+                }
+                total_bytes += n;
+            }
+            let duration = start.elapsed().as_secs_f64();
+            let avg_speed = if duration != 0f64 {
+                (total_bytes as f64 / duration) * 8.0 / (1024.0 * 1024.0)
+            } else {
+                print!("测速失败");
+                continue;
+            };
+            println!("平均速度：{:.2} Mbps", avg_speed);
+            let res = TestResult {
+                mirror,
+                test: avg_speed,
+            };
+            test_results.push(res);
+        }
+        test_results
+            .iter()
+            .max_by(|a, b| a.test.total_cmp(&b.test))
+            .map(|res| res.mirror)
+            .ok_or(MirrorError::SpeedTestFailed("全部失败".to_string()))
     }
 }
 

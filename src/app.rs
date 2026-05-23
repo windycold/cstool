@@ -42,7 +42,7 @@ impl App {
         };
 
         if let Err(e) = result {
-            eprintln!("{}", e)
+            eprintln!("{e}")
         };
     }
 

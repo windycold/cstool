@@ -10,7 +10,7 @@ pub const PIP: MirrorManager = MirrorManager::new(
         name: "tuna",
         description: "",
         url: "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple",
-        test_url: "",
+        test_url: "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/local.db",
     }],
     pip_set,
 );
@@ -22,10 +22,12 @@ fn pip_set(mirror: &MirrorSite, _: Option<Scope>) -> Result<(), MirrorError> {
         .arg(mirror.url)
         .output()?;
     if !output.status.success() {
-        return Err(MirrorError::Io(Error::other(format!(
+        Err(MirrorError::Io(Error::other(format!(
             "pip 命令执行失败: {}",
             String::from_utf8_lossy(&output.stderr)
-        ))));
-    };
-    Ok(())
+        ))))
+    } else {
+        println!("换源成功");
+        Ok(())
+    }
 }
