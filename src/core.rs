@@ -13,7 +13,6 @@ use thiserror::Error;
 /// * `test_url` - A static string slice that specifies a test URL, which can be used to verify the availability or status of the mirror site.
 pub struct MirrorSite {
     pub name: &'static str,
-    pub description: &'static str,
     pub url: &'static str,
     pub test_url: &'static str,
 }
@@ -64,6 +63,16 @@ pub struct MirrorManager {
 }
 
 impl MirrorManager {
+    /// Creates a new MirrorManager instance with the specified configuration.
+    ///
+    /// # Arguments
+    /// * `name` - Name of the software/project
+    /// * `version` - Version of the software
+    /// * `author` - Author or entity responsible for the software
+    /// * `description` - Brief description of the software's purpose
+    /// * `mirrors` - Slice of available mirror sites
+    /// * `set_fun` - Function pointer to configure a mirror site
+    /// * `is_exist` - Function pointer to check if the software is installed
     pub const fn new(
         name: &'static str,
         version: &'static str,
@@ -83,9 +92,11 @@ impl MirrorManager {
             is_exist,
         }
     }
+    /// Returns the name of the mirror manager.
     pub fn name(&self) -> &'static str {
         self.name
     }
+    /// Returns a formatted description string containing name, version, author, and description.
     pub fn description(&self) -> String {
         format!(
             "名称：{}\n版本：{}\n作者：{}\n介绍：{}",
@@ -93,10 +104,17 @@ impl MirrorManager {
         )
     }
 
+    /// Returns a static slice of available mirror sites.
     pub fn available_mirrors(&self) -> &'static [MirrorSite] {
         self.mirrors
     }
 
+    /// Configures the mirror for the specified scope.
+    /// If no mirror is specified, performs a speed test to select the fastest one.
+    ///
+    /// # Arguments
+    /// * `mirror` - Optional mirror name to use; if None, auto-selects via speed test
+    /// * `scope` - Optional scope for the mirror configuration (System, User, or Project)
     pub fn set(&self, mirror: Option<String>, scope: Option<Scope>) -> Result<(), MirrorError> {
         if !(self.is_exist)(){
             return Err(MirrorError::NotFound(self.name))
@@ -112,11 +130,18 @@ impl MirrorManager {
         (self.set_fun)(target, scope)
     }
 
+    /// Resets the mirror configuration to the official source.
+    ///
+    /// # Arguments
+    /// * `scope` - Optional scope for the mirror configuration
     pub fn reset(&self, scope: Option<Scope>) -> Result<(), MirrorError> {
         self.set(Some("official".to_string()), scope)
     }
 
+    /// Performs speed tests on all available mirrors and returns the fastest one.
+    /// Downloads test data from each mirror and calculates average speed in Mbps.
     fn speedtest(&self) -> Result<&MirrorSite, MirrorError> {
+        /// Represents the result of a mirror speed test, containing the mirror reference and measured speed.
         struct TestResult {
             mirror: &'static MirrorSite,
             test: f64,
@@ -165,6 +190,14 @@ impl MirrorManager {
     }
 }
 
+/// Represents errors that can occur during mirror operations.
+///
+/// # Variants
+/// * `MangerNotFound` - The specified target manager was not found
+/// * `MirrorNotFound` - The specified mirror name was not found
+/// * `Io` - An I/O operation failed
+/// * `SpeedTestFailed` - Mirror speed testing failed for all mirrors
+/// * `NotFound` - The required software is not installed
 #[derive(Error, Debug)]
 pub enum MirrorError {
     #[error("找不到名为 '{0}' 的目标")]
@@ -183,6 +216,12 @@ pub enum MirrorError {
     NotFound(&'static str),
 }
 
+/// Defines the scope level for mirror configuration.
+///
+/// # Variants
+/// * `System` - System-wide mirror configuration
+/// * `User` - User-level mirror configuration
+/// * `Project` - Project-specific mirror configuration
 #[derive(Copy, Clone)]
 pub enum Scope {
     System,
@@ -190,6 +229,7 @@ pub enum Scope {
     Project,
 }
 
+/// Converts a command-line scope argument to the internal Scope representation.
 impl From<ScopeArg> for Scope {
     fn from(value: ScopeArg) -> Self {
         match value {

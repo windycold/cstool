@@ -32,7 +32,11 @@ impl App {
         App
     }
 
-    ///run the App
+    /// Runs the application by executing the command specified in the CLI arguments.
+    /// Dispatches to set, reset, or list operations based on the command.
+    ///
+    /// # Arguments
+    /// * `cli` - Parsed command-line interface arguments
     pub fn run(&self, cli: Cli) {
         let scope: Option<Scope> = cli.scope.map(Into::into);
         let result = match cli.command {
@@ -46,7 +50,13 @@ impl App {
         };
     }
 
-    //命令的解析并调用后续运行，分离出来为了增强可读性
+    /// Parses the target and mirror arguments, then configures the mirror for the specified scope.
+    /// Returns an error if the target manager is not found.
+    ///
+    /// # Arguments
+    /// * `target` - The target software/package manager name
+    /// * `mirror` - Optional mirror name to configure
+    /// * `scope` - Optional scope for the configuration
     #[inline]
     fn set(target: &str, mirror: Option<String>, scope: Option<Scope>) -> Result<(), MirrorError> {
         match recipes::get_manger(target) {
@@ -54,6 +64,11 @@ impl App {
             None => Err(MirrorError::MangerNotFound(target.to_string())),
         }
     }
+    /// Resets the mirror configuration for the specified target to the official source.
+    ///
+    /// # Arguments
+    /// * `target` - The target software/package manager name
+    /// * `scope` - Optional scope for the configuration
     #[inline]
     fn reset(target: &str, scope: Option<Scope>) -> Result<(), MirrorError> {
         match recipes::get_manger(target) {
@@ -61,6 +76,10 @@ impl App {
             None => Err(MirrorError::MangerNotFound(target.to_string())),
         }
     }
+    /// Lists available mirrors for a specific target, or lists all supported targets if none specified.
+    ///
+    /// # Arguments
+    /// * `target` - Optional target name; if None, lists all supported targets
     #[inline]
     fn list(target: Option<String>) -> Result<(), MirrorError> {
         match target {
