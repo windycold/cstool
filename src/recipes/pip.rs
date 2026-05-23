@@ -13,9 +13,11 @@ pub const PIP: MirrorManager = MirrorManager::new(
         test_url: "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/local.db",
     }],
     pip_set,
+    pip_is_exist,
 );
 fn pip_set(mirror: &MirrorSite, _: Option<Scope>) -> Result<(), MirrorError> {
-    let output = Command::new("pip")
+    let pip_cmd = if cfg!(windows) { "pip" } else { "pip3" };
+    let output = Command::new(pip_cmd)
         .arg("config")
         .arg("set")
         .arg("global.index-url")
@@ -30,4 +32,13 @@ fn pip_set(mirror: &MirrorSite, _: Option<Scope>) -> Result<(), MirrorError> {
         println!("换源成功");
         Ok(())
     }
+}
+fn pip_is_exist() -> bool {
+    let python_cmd = if cfg!(windows) { "python" } else { "python3" };
+
+    Command::new(python_cmd)
+        .args(["-m", "pip", "--version"])
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false)
 }

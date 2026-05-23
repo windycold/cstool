@@ -60,6 +60,7 @@ pub struct MirrorManager {
     description: &'static str,
     mirrors: &'static [MirrorSite],
     set_fun: fn(mirror: &MirrorSite, scope: Option<Scope>) -> Result<(), MirrorError>,
+    is_exist:fn()->bool,
 }
 
 impl MirrorManager {
@@ -70,6 +71,7 @@ impl MirrorManager {
         description: &'static str,
         mirrors: &'static [MirrorSite],
         set_fun: fn(mirror: &MirrorSite, scope: Option<Scope>) -> Result<(), MirrorError>,
+        is_exist:fn()->bool,
     ) -> Self {
         Self {
             name,
@@ -78,6 +80,7 @@ impl MirrorManager {
             description,
             mirrors,
             set_fun,
+            is_exist,
         }
     }
     pub fn name(&self) -> &'static str {
@@ -95,6 +98,9 @@ impl MirrorManager {
     }
 
     pub fn set(&self, mirror: Option<String>, scope: Option<Scope>) -> Result<(), MirrorError> {
+        if !(self.is_exist)(){
+            return Err(MirrorError::NotFound(self.name))
+        };
         let target = match mirror {
             Some(t) => self
                 .mirrors
@@ -172,6 +178,9 @@ pub enum MirrorError {
 
     #[error("测速失败：{0}")]
     SpeedTestFailed(String),
+
+    #[error("你没有安装：{0}")]
+    NotFound(&'static str),
 }
 
 #[derive(Copy, Clone)]
