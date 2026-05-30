@@ -127,7 +127,9 @@ impl MirrorManager {
                 .ok_or(MirrorError::MirrorNotFound(t.to_string()))?,
             None => self.speedtest()?,
         };
-        (self.set_fun)(target, scope)
+        (self.set_fun)(target, scope)?;
+        println!("换源成功，源：{}", target.name);
+        Ok(())
     }
 
     /// Resets the mirror configuration to the official source.

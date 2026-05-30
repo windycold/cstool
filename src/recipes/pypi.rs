@@ -75,7 +75,6 @@ fn pip_set(mirror: &MirrorSite, _: Option<Scope>) -> Result<(), MirrorError> {
             String::from_utf8_lossy(&output.stderr)
         ))))
     } else {
-        println!("换源成功，源：{}", mirror.name);
         Ok(())
     }
 }
