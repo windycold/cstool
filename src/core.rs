@@ -1,5 +1,5 @@
 use crate::cli::ScopeArg;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::time::Instant;
 use thiserror::Error;
 
@@ -59,7 +59,7 @@ pub struct MirrorManager {
     description: &'static str,
     mirrors: &'static [MirrorSite],
     set_fun: fn(mirror: &MirrorSite, scope: Option<Scope>) -> Result<(), MirrorError>,
-    is_exist:fn()->bool,
+    is_exist: fn() -> bool,
 }
 
 impl MirrorManager {
@@ -80,7 +80,7 @@ impl MirrorManager {
         description: &'static str,
         mirrors: &'static [MirrorSite],
         set_fun: fn(mirror: &MirrorSite, scope: Option<Scope>) -> Result<(), MirrorError>,
-        is_exist:fn()->bool,
+        is_exist: fn() -> bool,
     ) -> Self {
         Self {
             name,
@@ -116,8 +116,8 @@ impl MirrorManager {
     /// * `mirror` - Optional mirror name to use; if None, auto-selects via speed test
     /// * `scope` - Optional scope for the mirror configuration (System, User, or Project)
     pub fn set(&self, mirror: Option<String>, scope: Option<Scope>) -> Result<(), MirrorError> {
-        if !(self.is_exist)(){
-            return Err(MirrorError::NotFound(self.name))
+        if !(self.is_exist)() {
+            return Err(MirrorError::NotFound(self.name));
         };
         let target = match mirror {
             Some(t) => self
@@ -150,17 +150,18 @@ impl MirrorManager {
         println!("正在测速：");
         for mirror in self.mirrors {
             print!("源：{} ... ", mirror.name);
+            std::io::stdout().flush()?;
             let response = match ureq::get(mirror.test_url).call() {
                 Ok(o) => o,
                 Err(e) => {
-                    print!("测速失败{}", e);
+                    print!("测速失败{e}!");
                     continue;
                 }
             };
-            let start = Instant::now();
             let mut reader = response.into_body().into_reader();
             let mut buffer = [0u8; 64 * 1024];
             let mut total_bytes = 0;
+            let start = Instant::now();
             loop {
                 let n = reader.read(&mut buffer)?;
                 if n == 0 {
@@ -239,3 +240,134 @@ impl From<ScopeArg> for Scope {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::atomic::{AtomicBool, Ordering};
+
+    #[test]
+    fn test_scope_conversion() {
+        assert!(matches!(Scope::from(ScopeArg::System), Scope::System));
+        assert!(matches!(Scope::from(ScopeArg::User), Scope::User));
+        assert!(matches!(Scope::from(ScopeArg::Project), Scope::Project));
+    }
+
+    #[test]
+    fn test_mirror_manager_description() {
+        let manager = MirrorManager::new(
+            "test_mgr",
+            "1.0.0",
+            "Author",
+            "Desc",
+            &[],
+            |_, _| Ok(()),
+            || true,
+        );
+        assert_eq!(manager.name(), "test_mgr");
+        assert!(manager.description().contains("test_mgr"));
+        assert!(manager.description().contains("1.0.0"));
+        assert!(manager.description().contains("Author"));
+        assert!(manager.description().contains("Desc"));
+    }
+
+    #[test]
+    fn test_mirror_manager_set_success() {
+        static SET_CALLED: AtomicBool = AtomicBool::new(false);
+        SET_CALLED.store(false, Ordering::SeqCst);
+
+        static MIRRORS: &[MirrorSite] = &[
+            MirrorSite {
+                name: "official",
+                url: "https://example.com/official",
+                test_url: "https://example.com/official/test",
+            },
+            MirrorSite {
+                name: "mirror1",
+                url: "https://example.com/mirror1",
+                test_url: "https://example.com/mirror1/test",
+            },
+        ];
+
+        let manager = MirrorManager::new(
+            "test_mgr",
+            "1.0.0",
+            "Author",
+            "Desc",
+            MIRRORS,
+            |mirror, scope| {
+                assert_eq!(mirror.name, "mirror1");
+                assert!(matches!(scope, Some(Scope::User)));
+                SET_CALLED.store(true, Ordering::SeqCst);
+                Ok(())
+            },
+            || true,
+        );
+
+        let res = manager.set(Some("mirror1".to_string()), Some(Scope::User));
+        assert!(res.is_ok());
+        assert!(SET_CALLED.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn test_mirror_manager_not_found() {
+        let manager = MirrorManager::new(
+            "test_mgr",
+            "1.0.0",
+            "Author",
+            "Desc",
+            &[],
+            |_, _| Ok(()),
+            || false,
+        );
+        let res = manager.set(Some("official".to_string()), None);
+        assert!(matches!(res, Err(MirrorError::NotFound("test_mgr"))));
+    }
+
+    #[test]
+    fn test_mirror_manager_mirror_not_found() {
+        let manager = MirrorManager::new(
+            "test_mgr",
+            "1.0.0",
+            "Author",
+            "Desc",
+            &[],
+            |_, _| Ok(()),
+            || true,
+        );
+        let res = manager.set(Some("invalid".to_string()), None);
+        assert!(matches!(res, Err(MirrorError::MirrorNotFound(ref m)) if m == "invalid"));
+    }
+
+    #[test]
+    fn test_mirror_manager_reset_success() {
+        static RESET_CALLED: AtomicBool = AtomicBool::new(false);
+        RESET_CALLED.store(false, Ordering::SeqCst);
+
+        static MIRRORS: &[MirrorSite] = &[MirrorSite {
+            name: "official",
+            url: "https://example.com/official",
+            test_url: "https://example.com/official/test",
+        }];
+
+        let manager = MirrorManager::new(
+            "test_mgr",
+            "1.0.0",
+            "Author",
+            "Desc",
+            MIRRORS,
+            |mirror, scope| {
+                assert_eq!(mirror.name, "official");
+                assert!(scope.is_none());
+                RESET_CALLED.store(true, Ordering::SeqCst);
+                Ok(())
+            },
+            || true,
+        );
+
+        let res = manager.reset(None);
+        assert!(res.is_ok());
+        assert!(RESET_CALLED.load(Ordering::SeqCst));
+    }
+}
+

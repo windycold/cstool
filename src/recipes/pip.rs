@@ -3,16 +3,33 @@ use std::{io::Error, process::Command};
 
 /// PIP mirror manager configuration.
 /// Defines the available mirrors and functions for setting and checking pip installation.
-pub const PIP: MirrorManager = MirrorManager::new(
+pub static PIP: MirrorManager = MirrorManager::new(
     "pip",
-    "latest",
-    "Python Software Foundation",
+    "0.1.0",
+    "WindyCold",
     "Pip is a package manager for Python",
-    &[MirrorSite {
-        name: "tuna",
-        url: "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple",
-        test_url: "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/local.db",
-    }],
+    &[
+        MirrorSite {
+            name: "official",
+            url: "https://pypi.org/simple",
+            test_url: "https://pypi.org/simple",
+        },
+        MirrorSite {
+            name: "tuna",
+            url: "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple",
+            test_url: "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/local.db",
+        },
+        MirrorSite {
+            name: "bfsu",
+            url: "https://mirrors.bfsu.edu.cn/pypi/web/simple",
+            test_url: "https://mirrors.bfsu.edu.cn/pypi/web/local.db",
+        },
+        MirrorSite {
+            name: "ustc",
+            url: "https://mirrors.ustc.edu.cn/pypi/web/simple",
+            test_url: "https://mirrors.ustc.edu.cn/pypi/web/local.db",
+        },
+    ],
     pip_set,
     pip_is_exist,
 );
@@ -44,7 +61,7 @@ fn pip_set(mirror: &MirrorSite, _: Option<Scope>) -> Result<(), MirrorError> {
 // Uses platform-specific python command (python on Windows, python3 on other platforms).
 //
 // # Returns
-// * `true` if pip is installed and accessible
+// * `true` if the pip is installed and accessible
 // * `false` otherwise
 fn pip_is_exist() -> bool {
     let python_cmd = if cfg!(windows) { "python" } else { "python3" };

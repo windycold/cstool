@@ -49,3 +49,51 @@ pub enum ScopeArg {
     /// Project-specific scope.
     Project,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cli_parsing_set() {
+        let args = vec!["chsrc_rs", "--scope", "user", "set", "pip", "tuna"];
+        let cli = Cli::try_parse_from(args).unwrap();
+        assert!(matches!(cli.scope, Some(ScopeArg::User)));
+        assert!(!cli.ipv6);
+        match cli.command {
+            Command::Set { target, mirror } => {
+                assert_eq!(target, "pip");
+                assert_eq!(mirror, Some("tuna".to_string()));
+            }
+            _ => panic!("Expected Set command"),
+        }
+    }
+
+    #[test]
+    fn test_cli_parsing_reset() {
+        let args = vec!["chsrc_rs", "--ipv6", "reset", "pip"];
+        let cli = Cli::try_parse_from(args).unwrap();
+        assert!(cli.scope.is_none());
+        assert!(cli.ipv6);
+        match cli.command {
+            Command::Reset { target } => {
+                assert_eq!(target, "pip");
+            }
+            _ => panic!("Expected Reset command"),
+        }
+    }
+
+    #[test]
+    fn test_cli_parsing_list() {
+        let args = vec!["chsrc_rs", "list"];
+        let cli = Cli::try_parse_from(args).unwrap();
+        assert!(!cli.ipv6);
+        match cli.command {
+            Command::List { target } => {
+                assert!(target.is_none());
+            }
+            _ => panic!("Expected List command"),
+        }
+    }
+}
+
