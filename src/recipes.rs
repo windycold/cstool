@@ -1,7 +1,9 @@
 //! This module contains the `MANGER_REGISTRY` and `get_manger` function.
 use crate::core::MirrorManager;
 
+mod cargo;
 mod pypi;
+
 ///
 /// `MANGER_REGISTRY` is a const slice that holds references to `MirrorManager` instances.
 /// This setup is typically used in systems where multiple managers or
@@ -17,7 +19,7 @@ mod pypi;
 /// - Ensure that the referenced `MirrorManager` instances, like `pip::PIP`, are properly
 ///   defined and available in their respective modules.
 ///
-pub static MANGER_REGISTRY: &[&MirrorManager] = &[&pypi::PYPI];
+pub static MANGER_REGISTRY: &[&MirrorManager] = &[&pypi::PYPI, &cargo::CARGO];
 
 /// Retrieves a MirrorManager by name from the registry.
 pub fn get_manger(name: &str) -> Option<&'static MirrorManager> {
@@ -41,4 +43,3 @@ mod tests {
         assert!(non_existent.is_none());
     }
 }
-
