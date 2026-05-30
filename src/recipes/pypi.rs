@@ -3,7 +3,7 @@ use std::{io::Error, process::Command};
 
 /// PIP mirror manager configuration.
 /// Defines the available mirrors and functions for setting and checking pip installation.
-pub static PIP: MirrorManager = MirrorManager::new(
+pub static PYPI: MirrorManager = MirrorManager::new(
     "pip",
     "0.1.0",
     "WindyCold",
@@ -12,22 +12,44 @@ pub static PIP: MirrorManager = MirrorManager::new(
         MirrorSite {
             name: "official",
             url: "https://pypi.org/simple",
-            test_url: "https://pypi.org/simple",
+            test_url: None, //官方源测速太慢
         },
+        // ========== 高校镜像源 ==========
         MirrorSite {
             name: "tuna",
             url: "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple",
-            test_url: "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/local.db",
+            test_url: Some("https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/"),
         },
         MirrorSite {
             name: "bfsu",
             url: "https://mirrors.bfsu.edu.cn/pypi/web/simple",
-            test_url: "https://mirrors.bfsu.edu.cn/pypi/web/local.db",
+            test_url: Some("https://mirrors.bfsu.edu.cn/pypi/web/simple/"),
         },
         MirrorSite {
             name: "ustc",
-            url: "https://mirrors.ustc.edu.cn/pypi/web/simple",
-            test_url: "https://mirrors.ustc.edu.cn/pypi/web/local.db",
+            url: "https://mirrors.ustc.edu.cn/pypi/simple",
+            test_url: Some("https://mirrors.ustc.edu.cn/pypi/simple/"),
+        },
+        MirrorSite {
+            name: "jlu",
+            url: "https://mirrors.jlu.edu.cn/pypi/web/simple",
+            test_url: Some("https://mirrors.jlu.edu.cn/pypi/web/simple"),
+        },
+        // ========== 企业镜像源 ==========
+        MirrorSite {
+            name: "aliyun",
+            url: "https://mirrors.aliyun.com/pypi/simple",
+            test_url: Some("https://mirrors.aliyun.com/pypi/simple/"),
+        },
+        MirrorSite {
+            name: "tencent",
+            url: "https://mirrors.cloud.tencent.com/pypi/simple",
+            test_url: Some("https://mirrors.cloud.tencent.com/pypi/simple/"),
+        },
+        MirrorSite {
+            name: "netease",
+            url: "https://mirrors.163.com/pypi/simple",
+            test_url: Some("https://mirrors.163.com/pypi/simple/"),
         },
     ],
     pip_set,
@@ -53,7 +75,7 @@ fn pip_set(mirror: &MirrorSite, _: Option<Scope>) -> Result<(), MirrorError> {
             String::from_utf8_lossy(&output.stderr)
         ))))
     } else {
-        println!("换源成功");
+        println!("换源成功，源：{}", mirror.name);
         Ok(())
     }
 }
