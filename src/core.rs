@@ -14,7 +14,7 @@ use thiserror::Error;
 pub struct MirrorSite {
     pub name: &'static str,
     pub url: &'static str,
-    pub test_url: &'static str,
+    pub test_url: Option<&'static str>,
 }
 
 /// Represents a manager for handling mirror sites, providing details about the software and methods to interact with mirrors.
@@ -151,10 +151,14 @@ impl MirrorManager {
         for mirror in self.mirrors {
             print!("源：{} ... ", mirror.name);
             std::io::stdout().flush()?;
-            let response = match ureq::get(mirror.test_url).call() {
+            let Some(test_url) = mirror.test_url else {
+                println!("没有测速链接，跳过测速");
+                continue;
+            };
+            let response = match ureq::get(test_url).call() {
                 Ok(o) => o,
                 Err(e) => {
-                    print!("测速失败{e}!");
+                    println!("测速失败{e}!");
                     continue;
                 }
             };
@@ -173,7 +177,7 @@ impl MirrorManager {
             let avg_speed = if duration != 0f64 {
                 (total_bytes as f64 / duration) * 8.0 / (1024.0 * 1024.0)
             } else {
-                print!("测速失败");
+                println!("测速失败");
                 continue;
             };
             println!("平均速度：{:.2} Mbps", avg_speed);
@@ -280,12 +284,12 @@ mod tests {
             MirrorSite {
                 name: "official",
                 url: "https://example.com/official",
-                test_url: "https://example.com/official/test",
+                test_url: Some("https://example.com/official/test"),
             },
             MirrorSite {
                 name: "mirror1",
                 url: "https://example.com/mirror1",
-                test_url: "https://example.com/mirror1/test",
+                test_url: Some("https://example.com/mirror1/test"),
             },
         ];
 
@@ -347,7 +351,7 @@ mod tests {
         static MIRRORS: &[MirrorSite] = &[MirrorSite {
             name: "official",
             url: "https://example.com/official",
-            test_url: "https://example.com/official/test",
+            test_url: Some("https://example.com/official/test"),
         }];
 
         let manager = MirrorManager::new(
@@ -370,4 +374,3 @@ mod tests {
         assert!(RESET_CALLED.load(Ordering::SeqCst));
     }
 }
-
