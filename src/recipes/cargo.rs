@@ -7,7 +7,65 @@ pub static CARGO: MirrorManager = MirrorManager::new(
     "0.1.0",
     "WindyCold",
     "",
-    &[],
+    &[
+        MirrorSite {
+            name: "tuna",
+            url: "sparse+https://mirrors.tuna.tsinghua.edu.cn/crates.io-index/",
+            test_url: Some("https://mirrors.tuna.tsinghua.edu.cn/crates.io-index/se/rd/serde"),
+        },
+        MirrorSite {
+            name: "ustc",
+            url: "sparse+https://mirrors.ustc.edu.cn/crates.io-index/",
+            test_url: Some("https://mirrors.ustc.edu.cn/crates.io-index/se/rd/serde"),
+        },
+        MirrorSite {
+            name: "sjtug",
+            url: "sparse+https://mirrors.sjtug.sjtu.edu.cn/crates.io-index/",
+            test_url: Some("https://mirrors.sjtug.sjtu.edu.cn/crates.io-index/se/rd/serde"),
+        },
+        MirrorSite {
+            name: "bfsu",
+            url: "sparse+https://mirrors.bfsu.edu.cn/crates.io-index/",
+            test_url: Some("https://mirrors.bfsu.edu.cn/crates.io-index/se/rd/serde"),
+        },
+        MirrorSite {
+            name: "zju",
+            url: "sparse+https://mirrors.zju.edu.cn/crates.io-index/",
+            test_url: Some("https://mirrors.zju.edu.cn/crates.io-index/se/rd/serde"),
+        },
+        MirrorSite {
+            name: "sysu",
+            url: "sparse+https://mirror.sysu.edu.cn/crates.io-index/",
+            test_url: Some("https://mirror.sysu.edu.cn/crates.io-index/se/rd/serde"),
+        },
+        MirrorSite {
+            name: "njupt",
+            url: "sparse+https://mirrors.njupt.edu.cn/crates.io-index/",
+            test_url: None,
+        },
+        // 企业/云厂商镜像站
+        MirrorSite {
+            name: "aliyun",
+            url: "sparse+https://mirrors.aliyun.com/crates.io-index/",
+            test_url: Some("https://mirrors.aliyun.com/crates.io-index/se/rd/serde"),
+        },
+        MirrorSite {
+            name: "huaweicloud",
+            url: "sparse+https://mirrors.huaweicloud.com/crates.io-index/",
+            test_url: Some("https://mirrors.huaweicloud.com/crates.io-index/se/rd/serde"),
+        },
+        // 社区/其他镜像站
+        MirrorSite {
+            name: "rsproxy",
+            url: "sparse+https://rsproxy.cn/crates.io-index/",
+            test_url: None,
+        },
+        MirrorSite {
+            name: "mirrorz",
+            url: "sparse+https://help.mirrorz.org/crates.io-index/",
+            test_url: None,
+        },
+    ],
     cargo_set,
     cargo_is_exist,
 );
@@ -17,7 +75,7 @@ fn cargo_set(mirror: &MirrorSite, _: Option<Scope>) -> Result<(), MirrorError> {
     use toml_edit::DocumentMut;
     let Ok(dir) = env::var("CARGO_HOME").map(|mut x| {
         if cfg!(windows) {
-            x.push_str("\\.cargo\\config.toml");
+            x.push_str("\\config.toml");
             x
         } else {
             x.push_str("/config.toml");
@@ -38,8 +96,8 @@ fn cargo_set(mirror: &MirrorSite, _: Option<Scope>) -> Result<(), MirrorError> {
     if !doc.contains_key("source") {
         doc["source"] = Item::Table(Table::new())
     }
-    doc["source"]["crates-io"]["replace_with"] = value("mirror");
-    doc["source"]["mirror"]["register"] = value(mirror.url);
+    doc["source"]["crates-io"]["replace-with"] = value("mirror");
+    doc["source"]["mirror"]["registry"] = value(mirror.url);
 
     f.set_len(0)?;
     f.rewind()?;
