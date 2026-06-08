@@ -3,6 +3,8 @@ use crate::core::MirrorManager;
 
 mod cargo;
 mod pypi;
+#[cfg(target_os = "linux")]
+mod fedora;
 
 ///
 /// `MANGER_REGISTRY` is a const slice that holds references to `MirrorManager` instances.
@@ -19,7 +21,12 @@ mod pypi;
 /// - Ensure that the referenced `MirrorManager` instances, like `pip::PIP`, are properly
 ///   defined and available in their respective modules.
 ///
-pub static MANGER_REGISTRY: &[&MirrorManager] = &[&pypi::PYPI, &cargo::CARGO];
+pub static MANGER_REGISTRY: &[&MirrorManager] = &[
+    &pypi::PYPI,
+    &cargo::CARGO,
+    #[cfg(target_os = "linux")]
+    &fedora::FEDORA,
+];
 
 /// Retrieves a MirrorManager by name from the registry.
 pub fn get_manger(name: &str) -> Option<&'static MirrorManager> {

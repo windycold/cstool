@@ -1,6 +1,4 @@
 use crate::core::{MirrorError, MirrorManager, MirrorSite, Scope};
-use std::io::{Read, Seek, Write};
-use toml_edit::{value, Item, Table};
 
 pub static CARGO: MirrorManager = MirrorManager::new(
     "cargo",
@@ -71,8 +69,11 @@ pub static CARGO: MirrorManager = MirrorManager::new(
 );
 
 fn cargo_set(mirror: &MirrorSite, _: Option<Scope>) -> Result<(), MirrorError> {
-    use std::{env, fs};
-    use toml_edit::DocumentMut;
+    use std::{
+        env, fs,
+        io::{Read, Seek, Write},
+    };
+    use toml_edit::{DocumentMut, Item, Table, value};
     let Ok(dir) = env::var("CARGO_HOME").map(|mut x| {
         if cfg!(windows) {
             x.push_str("\\config.toml");
